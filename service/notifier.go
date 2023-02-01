@@ -1,7 +1,11 @@
 package service
 
-import "context"
+import (
+	"context"
+
+	"github.com/IktaS/subscription-tracker/entity"
+)
 
 type Notifier interface {
-	PingUser(ctx context.Context, userID string) error
+	NotifySubsription(ctx context.Context, subscription entity.Subscription) error
 }

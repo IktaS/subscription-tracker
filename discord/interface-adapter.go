@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/IktaS/subscription-tracker/entity"
 	"github.com/IktaS/subscription-tracker/service"
 	"github.com/bwmarrin/discordgo"
 )
@@ -27,7 +28,14 @@ func (b *DiscordBot) doPong(info *discordgo.MessageCreate) {
 		b.logger.Print("no service available to doPong")
 		return
 	}
-	b.service.PingUser(context.Background(), info.Author.ID)
+	b.service.NotifyUserSubscription(context.Background(), entity.User{ID: info.Author.ID}, entity.Subscription{
+		Title:         "Northernlion Sub",
+		PaymentMethod: "Jago Sub",
+		Amount: entity.Amount{
+			Value:    2,
+			Currency: "USD",
+		},
+	})
 }
 
 func (b *DiscordBot) setLogChannel(info *discordgo.MessageCreate) {

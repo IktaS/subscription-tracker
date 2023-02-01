@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/Necroforger/dgwidgets"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -37,14 +36,14 @@ func (b *DiscordBot) Info(ctx context.Context, msg string, args ...interface{}) 
 			Value: fmt.Sprint(args[i+1]),
 		})
 	}
-	p := dgwidgets.NewWidget(b.session, b.logChannelID, &discordgo.MessageEmbed{
+	embed := &discordgo.MessageEmbed{
 		Type:      discordgo.EmbedTypeRich,
 		Color:     color,
 		Fields:    fields,
 		Title:     fmt.Sprintf(format, msg),
 		Timestamp: time.Now().Format(time.RFC3339),
-	})
-	p.Spawn()
+	}
+	b.session.ChannelMessageSendEmbed(b.logChannelID, embed)
 }
 
 func (b *DiscordBot) Warning(ctx context.Context, msg string, args ...interface{}) {
@@ -63,14 +62,14 @@ func (b *DiscordBot) Warning(ctx context.Context, msg string, args ...interface{
 			Value: fmt.Sprint(args[i+1]),
 		})
 	}
-	p := dgwidgets.NewWidget(b.session, b.logChannelID, &discordgo.MessageEmbed{
+	embed := &discordgo.MessageEmbed{
 		Type:      discordgo.EmbedTypeRich,
 		Color:     color,
 		Fields:    fields,
 		Title:     fmt.Sprintf(format, msg),
 		Timestamp: time.Now().Format(time.RFC3339),
-	})
-	p.Spawn()
+	}
+	b.session.ChannelMessageSendEmbed(b.logChannelID, embed)
 }
 
 func (b *DiscordBot) Error(ctx context.Context, msg string, args ...interface{}) {
@@ -89,14 +88,14 @@ func (b *DiscordBot) Error(ctx context.Context, msg string, args ...interface{})
 			Value: fmt.Sprint(args[i+1]),
 		})
 	}
-	p := dgwidgets.NewWidget(b.session, b.logChannelID, &discordgo.MessageEmbed{
+	embed := &discordgo.MessageEmbed{
 		Type:      discordgo.EmbedTypeRich,
 		Color:     color,
 		Fields:    fields,
 		Title:     fmt.Sprintf(format, msg),
 		Timestamp: time.Now().Format(time.RFC3339),
-	})
-	p.Spawn()
+	}
+	b.session.ChannelMessageSendEmbed(b.logChannelID, embed)
 }
 
 func (b *DiscordBot) NewDiscordBotLogger() *log.Logger {

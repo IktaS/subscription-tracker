@@ -47,12 +47,20 @@ func (b *DiscordBot) initDiscordBot() error {
 	if err != nil {
 		return err
 	}
+	b.session.AddHandler(b.handleMessage)
+	b.session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		switch i.Type {
+		case discordgo.InteractionMessageComponent:
+			if h, ok := b.getInteractionHandlers()[i.MessageComponentData().CustomID]; ok {
+				h(s, i)
+			}
+		}
+	})
+	b.session.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 	return nil
 }
 
 func (b *DiscordBot) StartBot() error {
-	b.session.AddHandler(b.handleMessage)
-	b.session.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 	// Open a websocket connection to Discord and begin listening.
 	err := b.session.Open()
 	if err != nil {

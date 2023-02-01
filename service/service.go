@@ -1,9 +1,13 @@
 package service
 
-import "context"
+import (
+	"context"
+
+	"github.com/IktaS/subscription-tracker/entity"
+)
 
 type Service interface {
-	PingUser(ctx context.Context, userID string) error
+	NotifyUserSubscription(ctx context.Context, user entity.User, sub entity.Subscription) error
 }
 
 type service struct {
@@ -18,6 +22,10 @@ func NewService(notifier Notifier, logger Logger) *service {
 	}
 }
 
-func (s *service) PingUser(ctx context.Context, userID string) error {
-	return s.notifier.PingUser(ctx, userID)
+func (s *service) NotifyUserSubscription(ctx context.Context, user entity.User, sub entity.Subscription) error {
+	s.logger.Info(ctx, "info1")
+	s.logger.Error(ctx, "info2")
+	s.logger.Warning(ctx, "info3")
+	sub.User = user
+	return s.notifier.NotifySubsription(ctx, sub)
 }
