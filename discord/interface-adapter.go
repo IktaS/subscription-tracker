@@ -42,5 +42,11 @@ func (b *DiscordBot) setLogChannel(info *discordgo.MessageCreate) {
 	b.logMutex.Lock()
 	defer b.logMutex.Unlock()
 	b.logChannelID = info.ChannelID
+	go func() {
+		err := b.store.SetDefaultLogChannel(context.Background(), b.logChannelID)
+		if err != nil {
+			b.logger.Println(err)
+		}
+	}()
 	b.session.ChannelMessageSend(b.logChannelID, fmt.Sprintf("Successfully set this channel as log channel <@!%s>", info.Author.ID))
 }

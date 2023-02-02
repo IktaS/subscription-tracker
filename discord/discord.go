@@ -21,22 +21,32 @@ type DiscordBot struct {
 	authToken    string
 	logChannelID string
 	prefix       string
-	logMutex     sync.Mutex
+	logMutex     *sync.Mutex
 	service      service.Service
 	session      *discordgo.Session
 	logger       *log.Logger
+	store        Store
 }
 
-func NewDiscordBot(ctx context.Context, authToken string) (*DiscordBot, error) {
+func NewDiscordBot(ctx context.Context, authToken string, store Store) (*DiscordBot, error) {
 	bot := &DiscordBot{
 		authToken: authToken,
 		prefix:    defaultPrefix,
 		logger:    log.Default(),
+		store:     store,
+		logMutex:  &sync.Mutex{},
 	}
 	err := bot.initDiscordBot()
 	if err != nil {
 		return nil, err
 	}
+	logChannel, err := store.GetDefaultLogChannel(ctx)
+	if err != nil {
+		return nil, err
+	}
+	bot.logMutex.Lock()
+	defer bot.logMutex.Unlock()
+	bot.logChannelID = logChannel
 
 	return bot, nil
 }

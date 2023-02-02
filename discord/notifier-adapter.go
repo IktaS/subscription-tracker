@@ -26,19 +26,6 @@ func (b *DiscordBot) NotifySubsription(ctx context.Context, sub entity.Subscript
 }
 
 func (b *DiscordBot) generateDiscordMessageForSubscription(ctx context.Context, sub entity.Subscription) (*discordgo.MessageSend, error) {
-	var value float64
-	// if sub.Amount.Currency != "IDR" && sub.Amount.Currency != "" {
-	// 	from := gocurrency.NewCurrency(sub.Amount.Currency)
-	// 	to := gocurrency.NewCurrency("IDR")
-	// 	amount := decimal.NewFromFloat(sub.Amount.Value)
-
-	// 	conv, err := gocurrency.ConvertCurrency(from, to, amount)
-	// 	if err != nil {
-	// 		b.Error(ctx, "unable to convert currency", "error", err)
-	// 		return nil, err
-	// 	}
-	// 	value = conv.InexactFloat64()
-	// }
 	msg := &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
@@ -58,7 +45,7 @@ func (b *DiscordBot) generateDiscordMessageForSubscription(ctx context.Context, 
 					},
 					{
 						Name:   "Payment Amount (IDR)",
-						Value:  fmt.Sprintf("%.2f", value),
+						Value:  fmt.Sprintf("%.2f", sub.Amount.Value),
 						Inline: true,
 					},
 				},

@@ -22,6 +22,6 @@ type Amount struct {
 }
 
 type SubDuration struct {
-	Value    int
-	Duration time.Duration
+	Value int
+	Unit  string
 }
