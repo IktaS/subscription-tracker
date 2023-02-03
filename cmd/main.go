@@ -49,7 +49,7 @@ func main() {
 		log.Fatal(err)
 	}
 	forex := forex.NewForexService(os.Getenv("FOREXKEY"), expr, bot.NewDiscordBotLogger())
-	srv := service.NewService(bot, bot, forex)
+	srv := service.NewService(store, bot, bot, forex)
 	bot.RegisterService(srv)
 	bot.StartBot()
 	store.Shutdown()

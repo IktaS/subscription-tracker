@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/IktaS/subscription-tracker/service"
 	"github.com/bwmarrin/discordgo"
+	"github.com/kballard/go-shellquote"
 )
 
 const (
@@ -100,8 +102,32 @@ func (b *DiscordBot) handleMessage(s *discordgo.Session, m *discordgo.MessageCre
 	}
 
 	msgContent := m.Content[len(b.prefix):]
-	splits := strings.Split(msgContent, " ")
-	cmd := splits[0]
-	args := splits[1:]
-	b.processCommands(cmd, args, m)
+	words, err := shellquote.Split(msgContent)
+	if err != nil {
+		b.sendFailedCommandResponse("handle message", m.ChannelID, m.Author.ID, err)
+	}
+	b.processCommands(words[0], words[1:], m)
+}
+
+func (b *DiscordBot) sendSuccessCommandResponse(action, channelID, userID string) {
+	b.session.ChannelMessageSend(channelID, fmt.Sprintf("Successfully %s <@!%s>", action, userID))
+}
+
+func (b *DiscordBot) sendFailedCommandResponse(action, channelID, userID string, err error) {
+	msg := &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Type:  discordgo.EmbedTypeRich,
+				Color: 15795975,
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:  "Error",
+						Value: err.Error(),
+					},
+				},
+				Title: fmt.Sprintf("Failed to %s <@!%s>", action, userID),
+			},
+		},
+	}
+	b.session.ChannelMessageSendComplex(channelID, msg)
 }

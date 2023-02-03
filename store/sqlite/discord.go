@@ -7,12 +7,12 @@ import (
 
 const (
 	getDefaultLogChannel = "select log_channel from configuration;"
-	setDefaultLogChannel = "insert or replace into configuration(log_channel) values(?);"
+	setDefaultLogChannel = "insert or replace into configuration(log_channel) values($1);"
 )
 
 func (s *SQLiteStore) GetDefaultLogChannel(ctx context.Context) (string, error) {
 	var logChannel string
-	err := s.db.QueryRow(getDefaultLogChannel).Scan(&logChannel)
+	err := s.db.QueryRowContext(ctx, getDefaultLogChannel).Scan(&logChannel)
 	if err != nil && err != sql.ErrNoRows {
 		return "", err
 	}
