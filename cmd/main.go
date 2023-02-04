@@ -39,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot, err := discord.NewDiscordBot(ctx, os.Getenv("DISCORDKEY"), store)
+	bot, err := discord.NewDiscordBot(ctx, os.Getenv("DISCORDADMIN"), os.Getenv("DISCORDKEY"), store)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +50,9 @@ func main() {
 	}
 	forex := forex.NewForexService(os.Getenv("FOREXKEY"), expr, bot.NewDiscordBotLogger())
 	srv := service.NewService(store, bot, bot, forex)
+	srv.LoadSubscriptions(ctx)
 	bot.RegisterService(srv)
 	bot.StartBot()
+	srv.Shutdown()
 	store.Shutdown()
 }

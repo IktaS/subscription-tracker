@@ -8,6 +8,8 @@ require (
 	github.com/shopspring/decimal v1.3.1
 )
 
+require github.com/procyon-projects/chrono v1.1.2 // indirect
+
 require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2 // indirect

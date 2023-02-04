@@ -3,6 +3,7 @@ package discord
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -33,7 +34,10 @@ var (
 						Value: "set-payday",
 					},
 					{
-						Value: "get-sub-this-payday-cycle",
+						Value: "get-sub-pd",
+					},
+					{
+						Value: "get-sub-till-pd",
 					},
 					{
 						Value: "get-all-sub",
@@ -54,6 +58,12 @@ func (b *DiscordBot) processCommands(cmd string, args []string, info *discordgo.
 		b.setLogChannel(info)
 	case "set-payday":
 		b.setPayday(info, args)
+	case "get-sub-pd":
+		b.getSubPaydayCycle(info, args)
+	case "get-sub-till-pd":
+		b.getSubPayday(info, args)
+	case "get-all-sub":
+		b.getAllSub(info, args)
 	}
 }
 
@@ -62,7 +72,7 @@ func (b *DiscordBot) setLogChannel(info *discordgo.MessageCreate) {
 	b.logMutex.Lock()
 	defer b.logMutex.Unlock()
 	b.logChannelID = info.ChannelID
-	err := b.store.SetDefaultLogChannel(context.Background(), b.logChannelID)
+	err := b.store.SetDefaultLogChannel(context.Background(), entity.User{ID: info.Author.ID}, b.logChannelID)
 	if err != nil {
 		b.logger.Println(err)
 		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
@@ -121,7 +131,7 @@ func (b *DiscordBot) setSubscription(info *discordgo.MessageCreate, args []strin
 		b.session.ChannelMessageSendComplex(info.ChannelID, setSubscriptionHelp)
 		return
 	}
-	sub, err := b.parseSetSubscriptionArgs(args)
+	sub, err := b.parseSetSubscriptionArgs(info, args)
 	if err != nil {
 		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
 		return
@@ -134,8 +144,9 @@ func (b *DiscordBot) setSubscription(info *discordgo.MessageCreate, args []strin
 	b.sendSuccessCommandResponse(action, info.ChannelID, info.Author.ID)
 }
 
-func (b *DiscordBot) parseSetSubscriptionArgs(args []string) (entity.Subscription, error) {
+func (b *DiscordBot) parseSetSubscriptionArgs(info *discordgo.MessageCreate, args []string) (entity.Subscription, error) {
 	var sub entity.Subscription
+	sub.User.ID = info.Author.ID
 	for _, v := range args {
 		strs := strings.Split(v, "=")
 		if len(strs) != 2 {
@@ -212,7 +223,7 @@ var (
 )
 
 func (b *DiscordBot) setPayday(info *discordgo.MessageCreate, args []string) {
-	action := "setting subscription"
+	action := "setting payday"
 	if len(args) == 1 && args[0] == "help" {
 		b.session.ChannelMessageSendComplex(info.ChannelID, setPaydayHelp)
 		return
@@ -246,4 +257,117 @@ func (b *DiscordBot) parseSetPaydayArgs(args []string) (entity.Payday, error) {
 		return entity.StringToPayday(value)
 	}
 	return "", errors.New("failed to find 'time' argument")
+}
+
+var (
+	getSubPaydayCycleHelp = &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Get Sub at payday cycle",
+				Description: "get-sub-pd [{field}=\"{value}\"]",
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name: "Available field:",
+					},
+					{
+						Name:  "time",
+						Value: "optional (RFC3339)",
+					},
+				},
+			},
+		},
+	}
+)
+
+func (b *DiscordBot) getSubPaydayCycle(info *discordgo.MessageCreate, args []string) {
+	action := "getting sub payday cycle"
+	if len(args) == 1 && args[0] == "help" {
+		b.session.ChannelMessageSendComplex(info.ChannelID, getSubPaydayCycleHelp)
+		return
+	}
+	payday, err := b.parseGetSubPaydayCycleArgs(args)
+	if err != nil {
+		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
+		return
+	}
+	subs, err := b.service.GetAllSubscriptionInPaydayCycle(context.Background(), entity.User{
+		ID: info.Author.ID,
+	}, payday)
+	if err != nil {
+		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
+		return
+	}
+	msg := b.generateEmbedTableFromSubs(fmt.Sprintf("Subscription that need to be paid in %s cycle", payday.Format(time.RFC3339)), subs)
+	b.session.ChannelMessageSendComplex(info.ChannelID, msg)
+}
+
+func (b *DiscordBot) parseGetSubPaydayCycleArgs(args []string) (time.Time, error) {
+	for _, v := range args {
+		strs := strings.Split(v, "=")
+		if len(strs) != 2 {
+			return time.Now(), errors.New("invalid argument")
+		}
+		field, value := strs[0], strs[1]
+		if field != "time" {
+			return time.Now(), errors.New("unknown argument field")
+		}
+		return time.Parse(time.RFC3339, value)
+	}
+	return time.Now(), nil
+}
+
+var (
+	getSubUntilPaydayHelp = &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Get Sub until payday Command",
+				Description: "get-sub-till-pd",
+			},
+		},
+	}
+)
+
+func (b *DiscordBot) getSubPayday(info *discordgo.MessageCreate, args []string) {
+	action := "getting sub until payday"
+	if len(args) == 1 && args[0] == "help" {
+		b.session.ChannelMessageSendComplex(info.ChannelID, getSubUntilPaydayHelp)
+		return
+	}
+	subs, err := b.service.GetAllSubscriptionForUserUntilPayday(context.Background(), entity.User{
+		ID: info.Author.ID,
+	})
+	if err != nil {
+		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
+		return
+	}
+	msg := b.generateEmbedTableFromSubs(fmt.Sprintf("Subscription that need to be paid until next payday"), subs)
+	b.session.ChannelMessageSendComplex(info.ChannelID, msg)
+}
+
+var (
+	getAllSubscription = &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Get all sub",
+				Description: "get-all-sub",
+			},
+		},
+	}
+)
+
+func (b *DiscordBot) getAllSub(info *discordgo.MessageCreate, args []string) {
+	action := "getting all sub"
+	if len(args) == 1 && args[0] == "help" {
+		b.session.ChannelMessageSendComplex(info.ChannelID, getAllSubscription)
+		return
+	}
+	subs, err := b.service.GetAllSubscriptionForUser(context.Background(), entity.User{
+		ID: info.Author.ID,
+	})
+	if err != nil {
+		b.sendFailedCommandResponse(action, info.ChannelID, info.Author.ID, err)
+		return
+	}
+	msg := b.generateEmbedTableFromSubs(fmt.Sprintf("All Subscriptions"), subs)
+	b.session.ChannelMessageSendComplex(info.ChannelID, msg)
 }

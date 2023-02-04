@@ -1,8 +1,12 @@
 package discord
 
-import "context"
+import (
+	"context"
+
+	"github.com/IktaS/subscription-tracker/entity"
+)
 
 type Store interface {
-	GetDefaultLogChannel(ctx context.Context) (string, error)
-	SetDefaultLogChannel(ctx context.Context, logChannel string) error
+	GetDefaultLogChannel(ctx context.Context, user entity.User) (string, error)
+	SetDefaultLogChannel(ctx context.Context, user entity.User, logChannel string) error
 }

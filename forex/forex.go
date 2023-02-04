@@ -57,6 +57,8 @@ func (f *Forex) ToIDR(base string, value float64) (float64, error) {
 		rate = 17000
 	case "JPY":
 		rate = 120
+	case "IDR":
+		rate = 1
 	default:
 		return -1, ErrCurrencyNotFound
 	}

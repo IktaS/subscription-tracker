@@ -10,6 +10,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/IktaS/subscription-tracker/entity"
 	"github.com/IktaS/subscription-tracker/service"
 	"github.com/bwmarrin/discordgo"
 	"github.com/kballard/go-shellquote"
@@ -30,7 +31,7 @@ type DiscordBot struct {
 	store        Store
 }
 
-func NewDiscordBot(ctx context.Context, authToken string, store Store) (*DiscordBot, error) {
+func NewDiscordBot(ctx context.Context, superAdminID string, authToken string, store Store) (*DiscordBot, error) {
 	bot := &DiscordBot{
 		authToken: authToken,
 		prefix:    defaultPrefix,
@@ -42,7 +43,7 @@ func NewDiscordBot(ctx context.Context, authToken string, store Store) (*Discord
 	if err != nil {
 		return nil, err
 	}
-	logChannel, err := store.GetDefaultLogChannel(ctx)
+	logChannel, err := store.GetDefaultLogChannel(ctx, entity.User{ID: superAdminID})
 	if err != nil {
 		return nil, err
 	}

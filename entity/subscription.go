@@ -9,6 +9,7 @@ import (
 type User struct {
 	ID     string
 	Payday Payday
+	Role   string
 }
 
 func (u User) IsValid() bool {
@@ -16,11 +17,13 @@ func (u User) IsValid() bool {
 }
 
 type Subscription struct {
+	ID            string
 	User          User
 	Title         string
 	PaymentMethod string
 	Amount        Amount
 	LastPaidDate  time.Time
+	NextPaidDate  time.Time
 	Duration      SubDuration
 }
 
@@ -81,15 +84,15 @@ const (
 func (s SubDuration) ToTimeDuration() time.Duration {
 	switch s.Unit {
 	case DurationUnitYear:
-		return time.Hour * 24 * 365
+		return time.Hour * 24 * 365 * time.Duration(s.Value)
 	case DurationUnitMonth:
-		return time.Hour * 24 * 30
+		return time.Hour * 24 * 30 * time.Duration(s.Value)
 	case DurationUnitDay:
-		return time.Hour * 24
+		return time.Hour * 24 * time.Duration(s.Value)
 	case DurationUnitHour:
-		return time.Hour
+		return time.Hour * time.Duration(s.Value)
 	case DurationUnitMinute:
-		return time.Minute
+		return time.Minute * time.Duration(s.Value)
 	default:
 		return 0
 	}
@@ -141,9 +144,13 @@ func StringToPayday(s string) (Payday, error) {
 }
 
 func (p Payday) GetPaydayFromTo(t time.Time) (time.Time, time.Time, error) {
+	if p == "" {
+		return time.Time{}, time.Time{}, errors.New("invalid payday")
+	}
 	if p == End {
 		firstOfMonth := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
 		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+		firstOfMonth = firstOfMonth.AddDate(0, 0, -1)
 		return firstOfMonth, lastOfMonth, nil
 	}
 	val, err := strconv.Atoi(string(p))
