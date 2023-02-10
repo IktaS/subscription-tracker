@@ -1,0 +1,20 @@
+[Unit]
+Description=DiscordBot-Subscription-Tracker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ikta/subscription-tracker
+ExecStart=/home/ikta/subscription-tracker/main
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=subscription-tracker
+User=root
+Group=root
+Environment=PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/home/ikta/subscription-tracker
+
+
+[Install]
+WantedBy=multi-user.target
